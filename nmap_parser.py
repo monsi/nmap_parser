@@ -5,16 +5,19 @@ import sys
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--file', '-f', action = 'store', help = 'You must specify an nmap xml file to read from')
-parser.add_argument('--nse', '-n', action = 'store', help = 'Search the nmap Script output for a particular nse')
-parser.add_argument('--target', '-t', action = 'store', help = 'Search nmap results for a specific host')
-parser.add_argument('--vulns', '-v', action = 'store_true', help = 'Search for Vulnerabilities identified by Nmap')
-parser.add_argument('--list', '-l', action = 'store_true', help = 'List all identified nse\'s by Nmap')
+parser.add_argument('-f', '--file', action = 'store', help = 'You must specify an nmap xml file to read from')
+parser.add_argument('-n', '--nse', action = 'store', help = 'Search the nmap Script output for a particular nse')
+parser.add_argument('-t', '--target', action = 'store', help = 'Search nmap results for a specific host')
+parser.add_argument('-v', '--vulns', action = 'store_true', help = 'Search for Vulnerabilities identified by Nmap')
+parser.add_argument('-l', '--list', action = 'store_true', help = 'List all identified nse\'s by Nmap')
+parser.add_argument('-s', '--showcmd', action = 'store_true', help = 'Show a cmd that can be run to test the nse')
+
 file = parser.parse_args().file
 nse = parser.parse_args().nse
 target_host = parser.parse_args().target
 vulns = parser.parse_args().vulns
 list = parser.parse_args().list
+showcmd = parser.parse_args().showcmd
     
 def portsTag(ip):
     ports = host.getElementsByTagName("port")
@@ -26,7 +29,7 @@ def portsTag(ip):
                 if nse in script.getAttribute("id"):
                     nseOutput(ip,port,script)
             elif vulns:
-                if "VULNERABLE" in script.getAttribute("output"):
+                if "VULNERABLE:" in script.getAttribute("output"):
                     nseOutput(ip,port,script)
             elif list:
                 if script.getAttribute("id") not in nse_list:
@@ -35,10 +38,12 @@ def portsTag(ip):
                 nseOutput(ip,port,script)
 
 def nseOutput(ip,port,script):
-    print(script.getAttribute("id"))
+    print("\n#" + "========== " + script.getAttribute("id") + " ==========" + "#")
     print(str(ip) + ":" + str(port))
+    if showcmd:
+        print("\n# nmap -Pn -n --script=\"" + script.getAttribute("id") + "\" -p" + str(port) + " " + str(ip))
     print(script.getAttribute("output"))
-    print("="*30 + "\n")
+    print("\n#" + "========== end " + script.getAttribute("id") + " ==========" + "#")
 
 if file:
     doc = xml.dom.minidom.parse(file)
